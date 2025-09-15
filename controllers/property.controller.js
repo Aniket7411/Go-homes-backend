@@ -202,12 +202,177 @@ const updatePropertyStatusById = async (req, res) => {
     }
 };
 
+const shareProperty = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        const { shareType, shareData } = req.body;
+        const userId = req.user._id;
 
+        // Validate property exists and user has access
+        const property = await Property.findById(propertyId);
+        if (!property || property.isDeleted) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Property not found" 
+            });
+        }
+
+        // Check if user owns the property or if it's public
+        if (String(property.userId) !== String(userId) && !property.isApproved) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Unauthorized to share this property" 
+            });
+        }
+
+        // Generate share data based on share type
+        let shareResponse = {
+            success: true,
+            message: "Property shared successfully",
+            data: {
+                propertyId: property._id,
+                propertyName: property.propertyName,
+                propertyType: property.propertyType,
+                city: property.city,
+                propertyPrice: property.propertyPrice,
+                shareType: shareType,
+                shareUrl: null,
+                shareCode: null
+            }
+        };
+
+        switch (shareType) {
+            case 'link':
+                // Generate a shareable link
+                const shareUrl = `${req.protocol}://${req.get('host')}/api/property/shared/${propertyId}`;
+                shareResponse.data.shareUrl = shareUrl;
+                break;
+
+            case 'code':
+                // Generate a share code (using property code)
+                shareResponse.data.shareCode = property.propertyCode;
+                break;
+
+            case 'social':
+                // Prepare data for social media sharing
+                shareResponse.data.socialData = {
+                    title: `${property.propertyName} - ${property.propertyType}`,
+                    description: `${property.propertyType} in ${property.city} for ${property.propertyPrice ? `₹${property.propertyPrice}` : 'Contact for price'}`,
+                    image: property.images && property.images.length > 0 ? property.images[0] : null,
+                    url: `${req.protocol}://${req.get('host')}/api/property/shared/${propertyId}`
+                };
+                break;
+
+            case 'whatsapp':
+                // Generate WhatsApp share link
+                const whatsappText = encodeURIComponent(
+                    `Check out this ${property.propertyType} in ${property.city}!\n` +
+                    `${property.propertyName}\n` +
+                    `Price: ${property.propertyPrice ? `₹${property.propertyPrice}` : 'Contact for price'}\n` +
+                    `View more: ${req.protocol}://${req.get('host')}/api/property/shared/${propertyId}`
+                );
+                shareResponse.data.shareUrl = `https://wa.me/?text=${whatsappText}`;
+                break;
+
+            case 'email':
+                // Prepare email sharing data
+                shareResponse.data.emailData = {
+                    subject: `Property: ${property.propertyName}`,
+                    body: `Hi,\n\nI found this interesting property:\n\n` +
+                          `Property: ${property.propertyName}\n` +
+                          `Type: ${property.propertyType}\n` +
+                          `Location: ${property.city}\n` +
+                          `Price: ${property.propertyPrice ? `₹${property.propertyPrice}` : 'Contact for price'}\n\n` +
+                          `View details: ${req.protocol}://${req.get('host')}/api/property/shared/${propertyId}`
+                };
+                break;
+
+            default:
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Invalid share type. Supported types: link, code, social, whatsapp, email" 
+                });
+        }
+
+        res.status(200).json(shareResponse);
+
+    } catch (error) {
+        console.error("Error sharing property:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
+    }
+};
+
+const getSharedProperty = async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+
+        const property = await Property.findById(propertyId)
+            .populate('userId', 'name email phone')
+            .populate('backgroundMusic', 'title artist');
+
+        if (!property || property.isDeleted) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Property not found" 
+            });
+        }
+
+        // Return public property data (without sensitive information)
+        const publicPropertyData = {
+            _id: property._id,
+            propertyName: property.propertyName,
+            propertyType: property.propertyType,
+            furnitureType: property.furnitureType,
+            construction_status: property.construction_status,
+            rent_per_person: property.rent_per_person,
+            bhkDetails: property.bhkDetails,
+            propertyPrice: property.propertyPrice,
+            propertySize: property.propertySize,
+            city: property.city,
+            pincode: property.pincode,
+            landmark: property.landmark,
+            locality: property.locality,
+            completeAddress: property.completeAddress,
+            geoCoordinates: property.geoCoordinates,
+            includedDetails: property.includedDetails,
+            saleType: property.saleType,
+            PGorProperty: property.PGorProperty,
+            auctionDetails: property.auctionDetails,
+            propertyCode: property.propertyCode,
+            images: property.images,
+            video: property.video,
+            backgroundMusic: property.backgroundMusic,
+            ownerDetails: {
+                name: property.ownerDetails?.name,
+                email: property.ownerDetails?.email,
+                reraNumber: property.ownerDetails?.reraNumber
+            },
+            createdAt: property.createdAt
+        };
+
+        res.status(200).json({ 
+            success: true, 
+            data: publicPropertyData 
+        });
+
+    } catch (error) {
+        console.error("Error getting shared property:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
+    }
+};
 
 module.exports = {
     createProperty,
     getAllProperties,
     getProperties,
     deleteProperty,
-    updatePropertyStatusById
+    updatePropertyStatusById,
+    shareProperty,
+    getSharedProperty
 };

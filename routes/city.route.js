@@ -4,6 +4,8 @@ const { getSublocalities,getAreasWithPincode } = require('../controllers/localit
 const router = express.Router();
 
 router.get("/cities", CityController.getCities);
+router.get("/states", CityController.getStates);
+
 // router.get("/cities", CityController.loadCitiesFromJSON);
 
 

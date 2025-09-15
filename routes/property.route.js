@@ -11,9 +11,8 @@ router.get('/myProperties',authMiddleware, PropertyController.getProperties);
 router.delete('/deleteProperty/:id', authMiddleware, PropertyController.deleteProperty);
 router.patch('/status/:propertyId', authMiddleware, PropertyController.updatePropertyStatusById);
 
-
-
-
-
+// Property sharing routes
+router.post('/share/:propertyId', authMiddleware, PropertyController.shareProperty);
+router.get('/shared/:propertyId', PropertyController.getSharedProperty);
 
 module.exports = router;

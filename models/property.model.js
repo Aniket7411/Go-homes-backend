@@ -39,7 +39,7 @@ construction_status: {
     pincode: { type: String, required: true },
     landmark: { type: String },
     locality:{type:String},
-    completeAddress: { type: String, required: true },
+    completeAddress: { type: String },
     geoCoordinates: {
         type: { type: String, enum: ['Point'], required: true, default: 'Point' },
         coordinates: { type: [Number], required: true } // [longitude, latitude]
