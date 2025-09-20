@@ -8,7 +8,7 @@ const createProperty = async (propertyData) => {
 };
 
 const getAllProperties = async (query,userId) => {
-    const { city,locality, minPrice, maxPrice, propertyType, userLocation_longitude, userLocation_latitude, nearbyRange, saleType,search } = query;
+    const { city,state,locality, minPrice, maxPrice, propertyType, userLocation_longitude, userLocation_latitude, nearbyRange, saleType,search } = query;
     const longitude = +parseFloat(userLocation_longitude).toFixed(6);
     const latitude = +parseFloat(userLocation_latitude).toFixed(6);
     const filter = { isDeleted: false };
@@ -17,6 +17,9 @@ const getAllProperties = async (query,userId) => {
 
     if (city) {
         filter.city = city;
+    }
+    if (state) {
+        filter.state = state;
     }
      if (locality) {
         filter.locality = locality;
