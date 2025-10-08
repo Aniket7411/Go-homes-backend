@@ -15,15 +15,16 @@ const getAllProperties = async (query,userId) => {
 
     filter.status = "approved";
 
-    if (city) {
-        filter.city = city;
+   if (city) {
+    filter.city = { $regex: new RegExp(`^${city}$`, 'i') };
     }
     if (state) {
-        filter.state = state;
+        filter.state = { $regex: new RegExp(`^${state}$`, 'i') };
     }
-     if (locality) {
-        filter.locality = locality;
+    if (locality) {
+        filter.locality = { $regex: new RegExp(`^${locality}$`, 'i') };
     }
+
     if (saleType) {
         filter.saleType = saleType;
     }
@@ -35,18 +36,21 @@ const getAllProperties = async (query,userId) => {
         filter.propertyPrice = { $lte: maxPrice };
     }
 
-    if (search) {
-        const searchRegex = new RegExp(search, 'i');
-        filter.$or = [
-            { pincode: searchRegex },
-            { landmark: searchRegex },
-            { completeAddress: searchRegex },
-            { bhkDetails: searchRegex },
-            { propertyName: searchRegex },
-            { propertySize: searchRegex },
-            {locality:searchRegex}
-        ];
-    }
+    if (search && search.trim() !== "") {
+        console.log("search", search)
+    const searchRegex = new RegExp(search.trim(), 'i');
+    filter.$or = [
+        { pincode: searchRegex },
+        { landmark: searchRegex },
+        { completeAddress: searchRegex },
+        { bhkDetails: searchRegex },
+        { propertyName: searchRegex },
+        { propertySize: searchRegex },
+        { locality: searchRegex },
+        { city: searchRegex },
+        { state: searchRegex }
+    ];
+}
 
     if (propertyType) {
         filter.propertyType = propertyType;
